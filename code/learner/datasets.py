@@ -1,5 +1,3 @@
-from multiprocessing.process import BaseProcess
-
 import torch
 import numpy as np
 
@@ -70,7 +68,8 @@ class NetworkDataset(object):
         self.mem_buffer = MemBuffer(
             config_manger.max_sample, self.data_shapes[0][0], self.use_fp16
         )
-        self.batch_process =
+        self.batch_process
+        # TODO:
 
     def get_next_batch(self):
         pass
