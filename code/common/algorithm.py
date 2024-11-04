@@ -38,14 +38,19 @@ def make_fc_layer(in_features: int, out_features: int, use_bias=True):
     return fc_layer
 
 class MLP(nn.Module):
-    def __init__(self, fc_feat_dim_list: List[int], non_linearity: nn.Module = nn.ReLU, non_linearity_last: bool = False):
+    def __init__(self, fc_feat_dim_list: List[int], name: str, non_linearity: nn.Module = nn.ReLU, non_linearity_last: bool = False):
         super(MLP, self).__init__()
         self.fc_layers = nn.Sequential()
-
-        pass
+        for i in range(len(fc_feat_dim_list) - 1):
+            fc_layer = make_fc_layer(fc_feat_dim_list[i], fc_feat_dim_list[i + 1])
+            self.fc_layers.add_module("{0}_fc{1}".format(name, i + 1), fc_layer)
+            if i + 1 < len(fc_feat_dim_list) or non_linearity_last:
+                self.fc_layers.add_module(
+                    "{0}_non_linear{1}".format(name, i + 1), non_linearity()
+                )
 
     def forward(self, data):
-        pass
+        return self.fc_layers(data)
 
 def make_conv_layer():
     pass
