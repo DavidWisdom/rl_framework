@@ -50,8 +50,15 @@ class Actor:
         done = False
         self._reload_agents(eval_mode=eval_mode)
 
-        self.env.reset(eval_mode=eval_mode)
+        _, r, d, state_dict = self.env.reset(eval_mode=eval_mode)
+        if state_dict[0] is None:
+            game_id = state_dict[1]["game_id"]
+        else:
+            game_id = state_dict[0]["game_id"]
+
         rewards = [[] for _ in range(len(self.agents))]
+        step = 0
+        game_info = {}
         while not done:
             actions = []
             for i, agent in enumerate(self.agents):
@@ -60,11 +67,23 @@ class Actor:
                     action = d_action
                 actions.append(action)
                 rewards[i].append(sample["reward"])
+                if agent.is_latest_model and not eval_mode:
+                    sample_manager.save_sample(
+                        **sample, agent_id=i, game_id=game_id,
+                    )
+            _, r, d, state_dict = self.env.step(actions)
+            step += 1
+            done = False
+            for i in range(len(d)):
+                done = done or d[i]
+            self._save_last_sample(done, eval_mode, sample_manager, state_dict)
         self.env.close_game()
 
         if self.is_train and not eval_mode:
-            pass
-        self._print_info()
+            sample_manager.send_samples()
+        self._print_info(
+            # TODO:
+        )
 
     def _print_info(self):
         # TODO

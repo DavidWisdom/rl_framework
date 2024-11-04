@@ -1,10 +1,9 @@
 from env.env import Env
 
 
-class CliffWalking(Env):
+class CustomChess(Env):
     def __init__(self, eval_mode=False, predict_frequency=1):
-        self.eval_mode = eval_mode
-        self.predict_frequency = predict_frequency
+        pass
 
     def get_random_action(self, info):
         raise NotImplementedError("build model: not implemented")
