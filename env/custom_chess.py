@@ -7,6 +7,7 @@ class CustomChess(Env):
 
     def get_random_action(self, info):
         # action = [action_id, direction]
+
         raise NotImplementedError("build model: not implemented")
 
     def obs_space(self):
@@ -23,6 +24,9 @@ class CustomChess(Env):
         reward = None
         done = None
         info = None
+        # state_dict
+        # state_dict["legal_action"]
+
         return obs, reward, done, info
 
     def reset(self, eval_mode=False):

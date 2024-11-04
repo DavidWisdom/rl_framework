@@ -59,6 +59,7 @@ class Actor:
         rewards = [[] for _ in range(len(self.agents))]
         step = 0
         game_info = {}
+
         while not done:
             actions = []
             for i, agent in enumerate(self.agents):
