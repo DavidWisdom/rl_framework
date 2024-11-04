@@ -16,7 +16,7 @@ class Benchmark(object):
         self.init_env(node_info)
         self._init_model(network)
         if torch.cuda.is_available():
-
+            pass
 
     def init_env(self, node_info):
         self.node = node_info
