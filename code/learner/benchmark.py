@@ -104,14 +104,14 @@ class Benchmark(object):
         if self.config_manager:
             pass
         if self.node.is_chief_rank:
-
+            pass
 
     def do_slow(self):
         if self.slow_time > 0:
             time.sleep(self.slow_time)
 
     def _do_train(self):
-
+        pass
 
     def run(self):
         self._do_train()

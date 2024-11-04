@@ -1,5 +1,6 @@
 import time
 import traceback
+import numpy as np
 
 
 class Actor:
@@ -10,13 +11,13 @@ class Actor:
         self._episode_num = 0
         self.env = env
         self.is_train = is_train
-        self.sample_manager = None
+        self._sample_manager = None
 
     def set_env(self, environment):
         self.env = environment
 
     def set_sample_manager(self, sample_manager):
-        self.sample_manager = sample_manager
+        self._sample_manager = sample_manager
 
     def set_agents(self, agents):
         self.agents = agents
@@ -29,15 +30,36 @@ class Actor:
                 agent.reset("network")
 
     def _save_last_sample(self, done, eval_mode, sample_manager, state_dict):
-
-        pass
+        if done:
+            for i, agent in enumerate(self.agents):
+                if agent.is_latest_model and not eval_mode:
+                    if state_dict[i]["reward"] is not None:
+                        if type(state_dict[i]["reward"]) == tuple:
+                            sample_manager.save_last_sample(
+                                agent_id=i, reward=state_dict[i]["reward"][-1]
+                            )
+                        else:
+                            sample_manager.save_last_sample(
+                                agent_id=i, reward=state_dict[i]["reward"]
+                            )
+                    else:
+                        sample_manager.save_last_sample(agent_id=i, reward=0)
 
     def _run_episode(self, eval_mode=False):
+        sample_manager = self._sample_manager
         done = False
         self._reload_agents(eval_mode=eval_mode)
+
+        self.env.reset(eval_mode=eval_mode)
+        rewards = [[] for _ in range(len(self.agents))]
         while not done:
+            actions = []
             for i, agent in enumerate(self.agents):
-                pass
+                action, d_action, sample = agent.process(state_dict[i])
+                if eval_mode:
+                    action = d_action
+                actions.append(action)
+                rewards[i].append(sample["reward"])
         self.env.close_game()
 
         if self.is_train and not eval_mode:
@@ -45,6 +67,7 @@ class Actor:
         self._print_info()
 
     def _print_info(self):
+        # TODO
         pass
 
     def run(self, eval_freq):
