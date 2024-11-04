@@ -6,8 +6,8 @@ class Actor:
     def __init__(self, actor_id, agents, max_episode: int = 0, env=None, is_train=True):
         self.actor_id = actor_id
         self.agents = agents
-        self.max_episode = max_episode
-        self.episode_num = 0
+        self._max_episode = max_episode
+        self._episode_num = 0
         self.env = env
         self.is_train = is_train
         self.sample_manager = None
@@ -21,26 +21,43 @@ class Actor:
     def set_agents(self, agents):
         self.agents = agents
 
-    def reload_agents(self, eval_mode=False):
+    def _reload_agents(self, eval_mode=False):
         for i, agent in enumerate(self.agents):
             if eval_mode:
                 agent.reset("common_ai")
             else:
                 agent.reset("network")
 
-    def run_episode(self, eval_mode=False):
+    def _save_last_sample(self, done, eval_mode, sample_manager, state_dict):
+
+        pass
+
+    def _run_episode(self, eval_mode=False):
+        done = False
+        self._reload_agents(eval_mode=eval_mode)
+        while not done:
+            for i, agent in enumerate(self.agents):
+                pass
+        self.env.close_game()
+
+        if self.is_train and not eval_mode:
+            pass
+        self._print_info()
+
+    def _print_info(self):
         pass
 
     def run(self, eval_freq):
-        self.episode_num = 0
+        self._episode_num = 0
         while True:
             try:
-                self.episode_num += 1
-                # TODO:
-                pass
+                self._episode_num += 1
+                eval_mode = (
+                    self._episode_num % eval_freq == 0
+                )
+                self._run_episode(eval_mode=eval_mode)
             except Exception as e:
-                # TODO:
                 traceback.print_exc()
                 time.sleep(1)
-            if 0 < self.max_episode <= self.episode_num:
+            if 0 < self._max_episode <= self._episode_num:
                 break

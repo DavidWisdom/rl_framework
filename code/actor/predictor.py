@@ -13,7 +13,7 @@ class TorchPredictor(object):
         ckpt = torch.load(self.model_path, map_location=self.device)
         self.net.load_state_dict(ckpt["network_state_dict"])
 
-    def inference(self):
+    def inference(self, data_list):
         self.net.eval()
         # TODO:
         pass
