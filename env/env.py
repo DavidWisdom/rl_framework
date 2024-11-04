@@ -1,16 +1,22 @@
+from abc import abstractmethod
+
 class Env:
     def __init__(self, eval_mode=False, predict_frequency=1):
-        pass
+        raise NotImplementedError("build model: not implemented")
 
+    @abstractmethod
     def get_random_action(self, info):
-        pass
+        raise NotImplementedError("build model: not implemented")
 
+    @abstractmethod
     def step(self, actions):
-        pass
+        raise NotImplementedError("build model: not implemented")
 
+    @abstractmethod
     def reset(self, eval_mode=False):
-        pass
+        raise NotImplementedError("build model: not implemented")
 
+    @abstractmethod
     def close_game(self):
-        pass
+        raise NotImplementedError("build model: not implemented")
 
