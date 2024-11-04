@@ -6,6 +6,7 @@ class CustomChess(Env):
         pass
 
     def get_random_action(self, info):
+        # action = [action_id, direction]
         raise NotImplementedError("build model: not implemented")
 
     def obs_space(self):
