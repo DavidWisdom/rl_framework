@@ -5,6 +5,8 @@ class DimConfig:
     pass
 
 class Config:
+    NETWORK_NAME = "network"
+
     INIT_LEARNING_RATE_START = 0.0001
     BETA_START = 0.025
 

@@ -55,25 +55,26 @@ class Actor:
             game_id = state_dict[1]["game_id"]
         else:
             game_id = state_dict[0]["game_id"]
-
+        sample_manager.reset(agents=self.agents, game_id=game_id)
         rewards = [[] for _ in range(len(self.agents))]
         step = 0
         game_info = {}
         while not done:
-            actions = []
+            actions = [[] for _ in range(len(self.agents))]
             for i, agent in enumerate(self.agents):
                 action, d_action, sample = agent.process(state_dict[i])
                 if eval_mode:
                     action = d_action
-                actions.append(action)
+                actions[i] = action
                 rewards[i].append(sample["reward"])
                 if agent.is_latest_model and not eval_mode:
                     sample_manager.save_sample(
                         **sample, agent_id=i, game_id=game_id,
                     )
                 if self.env.is_turn:
-                    _, r, d, state_dict = self.env.step([action])
+                    _, r, d, state_dict = self.env.step(actions)
                     done = done and d[i]
+                    actions[i] = []
             if not self.env.is_turn:
                 _, r, d, state_dict = self.env.step(actions)
                 done = any(d)
