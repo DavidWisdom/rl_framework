@@ -17,11 +17,8 @@ class TicTacToe(Env):
 
     def get_random_action(self, info):
         legal_positions = [index - 1 for index in range(1, len(info[self.turn_no]["legal_action"])) if info[self.turn_no]["legal_action"][index] == 1]
-
-        # 如果没有合法的位置，返回 None 或者抛出异常
         if not legal_positions:
             assert False
-        # 从合法的位置中随机选择一个
         return [random.choice(legal_positions)]
 
     def step(self, actions, render=False):
