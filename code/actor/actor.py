@@ -59,7 +59,6 @@ class Actor:
         rewards = [[] for _ in range(len(self.agents))]
         step = 0
         game_info = {}
-
         while not done:
             actions = []
             for i, agent in enumerate(self.agents):
@@ -72,11 +71,13 @@ class Actor:
                     sample_manager.save_sample(
                         **sample, agent_id=i, game_id=game_id,
                     )
-            _, r, d, state_dict = self.env.step(actions)
+                if self.env.is_turn:
+                    _, r, d, state_dict = self.env.step([action])
+                    done = done and d[i]
+            if not self.env.is_turn:
+                _, r, d, state_dict = self.env.step(actions)
+                done = any(d)
             step += 1
-            done = False
-            for i in range(len(d)):
-                done = done or d[i]
             self._save_last_sample(done, eval_mode, sample_manager, state_dict)
         self.env.close_game()
 

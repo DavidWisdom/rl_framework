@@ -1,8 +1,10 @@
 from abc import abstractmethod
 
 class Env(object):
-    def __init__(self, eval_mode=False, predict_frequency=1):
-        raise NotImplementedError("build model: not implemented")
+    def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1):
+        self.is_turn = is_turn
+        self.eval_mode = eval_mode
+        self.predict_frequency = predict_frequency
 
     @abstractmethod
     def get_random_action(self, info):

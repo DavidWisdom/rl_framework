@@ -2,7 +2,8 @@ from env.env import Env
 
 
 class CliffWalking(Env):
-    def __init__(self, eval_mode=False, predict_frequency=1):
+    def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1):
+        self.is_turn = False
         self.eval_mode = eval_mode
         self.predict_frequency = predict_frequency
 

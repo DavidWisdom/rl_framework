@@ -1,6 +1,8 @@
 import collections
 
 import numpy as np
+
+from code.actor import rl_data_info
 from code.actor.rl_data_info import RLDataInfo
 
 
@@ -36,7 +38,20 @@ class SampleManager:
         game_id=None,
     ):
         reward = self._clip_reward(reward)
-        pass
+        rl_data_info = RLDataInfo()
+        rl_data_info.frame_no = frame_no
+        rl_data_info.legal_action = legal_action.reshape([-1])
+        rl_data_info.reward = reward
+        rl_data_info.value = value
+        rl_data_info.prob = prob
+        rl_data_info.action = action
+        rl_data_info.sub_action = sub_action[action[0]]
+        rl_data_info.is_train = False if action[0] < 0 else is_train
+
+    def _add_extra_info(self, frame_no, sample):
+        return sample.astype(np.float32).tobytes()
+
+    def _send_game_data(self):
 
     def save_last_sample(self):
         pass

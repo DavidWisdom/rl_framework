@@ -2,7 +2,7 @@ from env.env import Env
 
 
 class CustomChess(Env):
-    def __init__(self, eval_mode=False, predict_frequency=1):
+    def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1):
         pass
 
     def get_random_action(self, info):
