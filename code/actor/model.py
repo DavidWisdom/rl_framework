@@ -1,10 +1,12 @@
 import torch
+
+from code.actor.singleton import Singleton
 from code.common.algorithm import Algorithm
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
 
 
-
+@Singleton
 class Model(Algorithm):
     def __init__(self):
         super().__init__()

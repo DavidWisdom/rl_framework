@@ -5,7 +5,7 @@ import logging
 from code.common.algorithm import Algorithm
 from code.learner.benchmark import Benchmark
 
-def _run():
+def _run(model_config, framework_config, single_test):
     benchmark = Benchmark(
         Algorithm(),
 
