@@ -16,39 +16,48 @@ class TicTacToe(Env):
         return self.LABEL_SIZE_LIST
 
     def get_random_action(self, info):
-        actions = [[], []]
+        legal_positions = [index - 1 for index in range(1, len(info[self.turn_no]["legal_action"])) if info[self.turn_no]["legal_action"][index] == 1]
 
-        return actions
+        # 如果没有合法的位置，返回 None 或者抛出异常
+        if not legal_positions:
+            assert False
+        # 从合法的位置中随机选择一个
+        return [random.choice(legal_positions)]
 
     def step(self, actions, render=False):
         # action = [pos]
         obs = [self.state_dict[i]["observation"] for i in range(2)]
-        done = [False for i in range(2)]
         reward = 0
         for i, act in enumerate(actions):
             if act:
                 assert self.turn_no == i
                 a = act[0]
-                assert len(act) == 1 and 0 <= a <= 9
+                if len(act) == 1 and 0 <= a <= 9:
+                    pass
+                else:
+                    print(f"{actions = } {len(act) = } {a = }")
                 self.turn_no = (self.turn_no + 1) % 2
-                if a == 0:
-                    done = [True, True]
-                elif 1 <= a <= 9:
-                    assert self.legal_action[a + 2] == 1
-                    self.state_dict[i]["observation"][a] = 1
-                    self.state_dict[self.turn_no]["observation"][a + 9] = 1
-                    self.legal_action[a + 2] = 0
-                done[i] = self._is_over()
-                if done[i]:
+                if 1 <= a <= 9:
+                    assert self.legal_action[a + 1] == 1
+                    self.state_dict[i]["observation"][(a - 1)] = 1
+                    self.state_dict[self.turn_no]["observation"][(a - 1) + 9] = 1
+                    self.legal_action[a + 1] = 0
+                self.done[i] = self._is_over()
+                if self.done[i]:
                     self.legal_action[1] = 1
+                    for j in range(1, 10):
+                        self.legal_action[j + 1] = 0
+                self.state_dict[i]["legal_action"] = self.legal_action
+                self.state_dict[self.turn_no]["legal_action"] = self.legal_action
         if render:
             self._render()
 
-        return obs, reward, done, self.state_dict
+        return obs, reward, self.done, self.state_dict
 
     def reset(self, eval_mode=False):
         self.eval_mode = eval_mode
         self._init_game()
+        return None, 0, False, self.state_dict
 
     def close_game(self):
         pass
@@ -90,7 +99,7 @@ class TicTacToe(Env):
     def _init_game(self):
         self.state_dict = [{} for _ in range(2)]
         self.turn_no = 0
-        self.done = False
+        self.done = [False for _ in range(2)]
         self.legal_action = [1] * 11
         self.legal_action[1] = 0
         for i in range(2):
@@ -118,35 +127,24 @@ class TicTacToe(Env):
             return True
 
             # 检查是否平局：棋盘已满且没有连线
-        if all(self.state_dict[0]["observation"][i] != 0 for i in range(9)):
+        if all(self.legal_action[i + 2] != 0 for i in range(9)):
             return True
 
             # 如果没有结束，返回 False
         return False
 
 if __name__ == "__main__":
-    game = TicTacToe()
-    pass
-    # while not done:
-    #     actions = [[] for _ in range(len(self.agents))]
-    #     for i in range(2):
-    #         action = game.get_random_action()
-    #         action, d_action, sample = agent.process(state_dict[i])
-    #         if eval_mode:
-    #             action = d_action
-    #         actions[i] = action
-    #         rewards[i].append(sample["reward"])
-    #         if agent.is_latest_model and not eval_mode:
-    #             sample_manager.save_sample(
-    #                 **sample, agent_id=i, game_id=game_id,
-    #             )
-    #         if self.env.is_turn:
-    #             _, r, d, state_dict = self.env.step(actions)
-    #             done = done and d[i]
-    #             actions[i] = []
-    #     if not self.env.is_turn:
-    #         _, r, d, state_dict = self.env.step(actions)
-    #         done = any(d)
-    #     step += 1
-    #     self._save_last_sample(done, eval_mode, sample_manager, state_dict)
-    # self.env.close_game()
+    env = TicTacToe()
+    done = False
+    _, r, d, state_dict = env.reset(eval_mode=True)
+    step = 0
+    while not done:
+        actions = [[] for _ in range(2)]
+        for i in range(2):
+            action = env.get_random_action(state_dict)
+            actions[i] = action
+            _, r, d, state_dict = env.step(actions, render=(i == 0))
+            done = all(d)
+            actions[i] = []
+        step += 1
+    env.close_game()

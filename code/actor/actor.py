@@ -73,7 +73,7 @@ class Actor:
                     )
                 if self.env.is_turn:
                     _, r, d, state_dict = self.env.step(actions)
-                    done = done and d[i]
+                    done = all(d)
                     actions[i] = []
             if not self.env.is_turn:
                 _, r, d, state_dict = self.env.step(actions)
