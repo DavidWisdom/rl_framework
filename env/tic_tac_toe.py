@@ -3,7 +3,7 @@ from env import Env
 import numpy as np
 
 class TicTacToe(Env):
-    LABEL_SIZE_LIST = [10]
+    LABEL_SIZE_LIST = [11] # 0-10 0: no action
     PLAYER_NUM = 2
     def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1):
         self.is_turn = True
@@ -32,10 +32,7 @@ class TicTacToe(Env):
             if act:
                 assert self.turn_no == i
                 a = act[0]
-                if len(act) == 1 and 0 <= a <= 9:
-                    pass
-                else:
-                    print(f"{actions = } {len(act) = } {a = }")
+                assert len(act) == 1 and 0 <= a <= 9
                 self.turn_no = (self.turn_no + 1) % 2
                 if 1 <= a <= 9:
                     assert self.legal_action[a + 1] == 1
