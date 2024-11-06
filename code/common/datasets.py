@@ -6,7 +6,7 @@ import torch
 import numpy as np
 
 from code.common.zmq_mem_pool import ZMQMEMPOOL
-from code.learner.batch_process import BatchProcess
+from code.common.batch_process import BatchProcess
 from code.common.membuffer import MemBuffer
 
 

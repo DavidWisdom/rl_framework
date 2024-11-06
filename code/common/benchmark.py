@@ -3,8 +3,8 @@ import torch
 import numpy as np
 import time
 
-from code.learner.datasets import Datasets, DataPrefetch, NetworkDataset
-from code.learner.model_manager import ModelManagerBase as ModelManager
+from code.common.datasets import NetworkDataset
+
 
 class Benchmark(object):
     def __init__(self, network, dataset, model_manager, config_manager, node_info = None, slow_time: float = 0.0):
