@@ -103,7 +103,7 @@ class Actor:
         if self.is_train and not eval_mode:
             sample_manager.send_samples()
         self._print_info(
-            # TODO:
+            # TODO
         )
 
     def _print_info(self):
@@ -119,8 +119,9 @@ class Actor:
                     self._episode_num % eval_freq == 0
                 )
                 self._run_episode(eval_mode=eval_mode)
-            except Exception as e:
+            except Exception:
                 traceback.print_exc()
                 time.sleep(1)
+                raise
             if 0 < self._max_episode <= self._episode_num:
                 break
