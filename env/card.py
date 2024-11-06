@@ -28,11 +28,12 @@ class Card(Env):
         16, 16, 16, 16
     ]
     # 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
-    # obs dim: 128
-    # 全局信息 全局初始手牌数 dim: 1 全局剩余手牌数 dim: 1 全局已出手牌 dim: 15 全局剩余手牌 dim: 15
-    # 我方信息 我方初始手牌数 dim: 1 我方剩余手牌数 dim: 1 我方已出手牌 dim: 15 我方剩余手牌 dim: 15
-    # 友方信息 友方初始手牌数 dim: 1 友方剩余手牌数 dim: 1 友方已出手牌 dim: 15 友方剩余手牌 dim: 15
-    # 敌方信息 敌方初始手牌数 dim: 1 敌方剩余手牌数 dim: 1 敌方已出手牌 dim: 15 敌方剩余手牌 dim: 15
+    # obs dim: 170
+    # 全局信息 全局总手牌数 dim: 1 全局剩余手牌数 dim: 1 全局模式 dim: 3 全局展示手牌: 15 全局已出手牌 dim: 15 全局剩余手牌 dim: 15
+    # 我方信息 我方初始手牌数 dim: 1 我方剩余手牌数 dim: 1 我方阵营 dim: 3 我方已出手牌 dim: 15 我方剩余手牌 dim: 15 我方上一帧动作手牌 dim: 15
+    # 下家信息 下家初始手牌数 dim: 1 下家剩余手牌数 dim: 1 下家阵营 dim: 3 下家已出手牌 dim: 15 下方上一帧动作手牌 dim: 15
+    # 上家信息 上家初始手牌数 dim: 1 上家剩余手牌数 dim: 1 上家阵营 dim: 3 上家已出手牌 dim: 15 上方上一帧动作手牌 dim: 15
+    
     def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1, player_num=2, player_card_num=17):
         self.is_turn = True
         self.eval_mode = eval_mode
