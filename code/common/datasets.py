@@ -44,11 +44,25 @@ class DataPrefetch:
 
     def get_recv_speed(self):
         return self.dataset.get_recv_speed()
+from abc import abstractmethod
 
-class NetworkDatasetRandom(object):
-    def __init__(self, config_manger, adapter):
-        self.use_fp16 = config_manger.use_fp16
-        self.batch_size = config_manger.batch_size
+
+class NetworkDatasetBase(object):
+    def __init__(self, config_manager, adapter):
+        raise NotImplementedError("build model: not implemented!")
+
+    @abstractmethod
+    def get_next_batch(self):
+        raise NotImplementedError("build model: not implemented!")
+
+    def get_recv_speed(self):
+        return None
+
+class NetworkDatasetRandom(NetworkDatasetBase):
+    def __init__(self, config_manager, adapter):
+        super().__init__(config_manager, adapter)
+        self.use_fp16 = config_manager.use_fp16
+        self.batch_size = config_manager.batch_size
         self.adapter = adapter
         self.data_shapes = self.adapter.get_data_shapes()
         self.sample_length = self.data_shapes[0][0]
@@ -64,8 +78,9 @@ class NetworkDatasetRandom(object):
     def get_recv_speed(self):
         return None
 
-class NetworkDatasetZMQ(object):
+class NetworkDatasetZMQ(NetworkDatasetBase):
     def __init__(self, config_manager, adapter, port=35200):
+        super().__init__(config_manager, adapter)
         self.max_sample = config_manager.max_sample
         self.batch_size = config_manager.batch_size
         self.adapter = adapter

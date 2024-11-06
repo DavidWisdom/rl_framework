@@ -47,6 +47,7 @@ class ZMQMEMPOOL(object):
                 msg = sys.exc_info()[0]
                 print(msg)
                 put_error_num += 1
+                raise
 
     def generate_samples(self, data):
         sample_list = []

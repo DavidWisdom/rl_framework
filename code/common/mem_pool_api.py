@@ -1,6 +1,7 @@
 import logging
 import zmq
-
+import struct
+import socket
 from code.common.mem_pool_protocol import MemPoolProtocol
 
 
@@ -70,8 +71,6 @@ class ZmqSocket:
             else:
                 logging.error("send timeout, try to reconnect")
                 self._connect()
-import struct
-import socket
 import logging
 import time
 
@@ -160,10 +159,6 @@ class TcpSocket:
 
             return recv_data
 
-import struct
-import socket
-from enum import Enum
-import lz4.block
 
 
 class MemPoolAPIs(object):

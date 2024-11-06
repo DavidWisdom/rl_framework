@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import time
 
-from code.common.datasets import NetworkDataset
+from code.common.datasets import DataPrefetch, Datasets, NetworkDatasetRandom
 
 
 class Benchmark(object):
@@ -16,7 +16,17 @@ class Benchmark(object):
         self.init_env(node_info)
         self._init_model(network)
         if torch.cuda.is_available():
-            pass
+            self.dataset = DataPrefetch(
+                self.dataset_base,
+                self.device,
+                self.config_manager.use_fp16,
+            )
+        else:
+            self.dataset = Datasets(self.dataset_base)
+        self.step_train_times = list()
+        self.skip_update_times = 0
+        self._last_save_model_time = 0
+        self._last_display_time = time.time()
 
     def init_env(self, node_info):
         self.node = node_info
@@ -93,7 +103,7 @@ class Benchmark(object):
         self.local_step = torch.tensor(self.local_step, dtype=torch.int).to(self.device)
         if self.config_manager.use_jit:
             example_data = torch.from_numpy(
-                NetworkDataset(
+                NetworkDatasetRandom(
                     self.config_manager, self.dataset_base.adapter
                 ).get_next_batch()
             ).to(self.device)

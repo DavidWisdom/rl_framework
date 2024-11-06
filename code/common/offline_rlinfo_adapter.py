@@ -38,8 +38,7 @@ class OfflineRlInfoAdapter(OfflineRlInfoAdapterBase):
         return self.deserialization_bytes(receive_data)
 
     def deserialization_bytes(self, receive_data):
-        data = []
-        data.append(np.frombuffer(receive_data, "f4"))
+        data = [np.frombuffer(receive_data, "f4")]
         return data
 
     def get_data_shapes(self):

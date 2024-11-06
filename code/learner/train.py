@@ -77,9 +77,6 @@ def run(config):
     config_manager.send_model_dir = config.backup_model_dir
 
     try:
-        log_level = None
-        if config.test_config or config.single_test:
-            log_level = "INFO"
         _run(config, config_manager, config.single_test)
     except:
         raise

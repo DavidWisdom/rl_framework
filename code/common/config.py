@@ -8,6 +8,7 @@ class Config:
     NETWORK_NAME = "network"
     LABEL_SIZE_LIST = [10]
     data_shapes = [
+        # TODO:
 
     ]
     IS_REINFORCE_TASK_LIST = [

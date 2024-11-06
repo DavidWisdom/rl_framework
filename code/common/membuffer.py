@@ -1,9 +1,3 @@
-from multiprocessing import Value, Array, Queue
-import random
-import sys
-import time
-import numpy as np
-import ctypes
 import random
 import copy
 import ctypes
@@ -132,8 +126,7 @@ class MemQueue(object):
             self._data_queue.put(data)
         except Exception:  # pylint: disable=broad-except
             error = sys.exc_info()[0]
-            raise
-            # LOG.exception("MemQueue append error {}".format(error))
+            print("MemQueue append error {}".format(error))
 
     def get_sample(self):
         return self._data_queue.get()

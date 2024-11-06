@@ -131,7 +131,7 @@ class MemPoolProtocol:
             if not isinstance(sample, bytes):
                 return None
 
-            compress_sample = lz4.block.compress(sample, store_size=False)
+            compress_sample = lz4.block.compress(sample)
             compress_samples.append(compress_sample)
         return compress_samples
 
