@@ -1,6 +1,6 @@
 import numpy as np
 import time
-
+import random
 from code.actor.model_pool_apis import ModelPoolAPIs
 from predictor import TorchPredictor as LocalPredictor
 
@@ -100,10 +100,28 @@ class Agent:
         return ret
 
     def _get_random_model(self):
-        pass
+        if self.agent_type in ["common_ai", "random"]:
+            self.is_latest_model = False
+
+            self.model_version = ""
+            return True
+
+        self._update_model_list()
+        rand_float = float(random.uniform(0, _G_RAND_MAX)) / float(_G_RAND_MAX)
+        if rand_float <= _G_MODEL_UPDATE_RATIO:
+            midx = len(self.model_list) - 1
+            self.is_latest_model = True
+        else:
+            midx = int(random.random() * len(self.model_list))
+            if midx == len(self.model_list):
+                midx = len(self.model_list) - 1
+            self.is_latest_model = False
+        return self._load_model(self.model_list[midx])
 
     def _get_latest_model(self):
-        pass
+        self._update_model_list()
+        self.is_latest_model = True
+        return self._load_model(self.model_list[-1])
 
     def feature_post_process(self, state_dict):
         return state_dict
@@ -121,7 +139,19 @@ class Agent:
         return action, d_action
 
     def _predict_process(self, feature, legal_action):
-        pass
+        input_list = []
+        input_list.append(np.array(feature))
+        input_list.append(np.array(legal_action))
+        input_list.append(self.lstm_cell)
+        input_list.append(self.lstm_hidden)
+
+        np_output = self._predictor.inference(input_list)
+
+        logits, value, self.lstm_cell, self.lstm_hidden = np_output[:4]
+
+        prob, action, d_action = self._sample_masked_action(logits, legal_action)
+
+        return prob, value, action, d_action
 
     def _legal_soft_max(self):
         pass
