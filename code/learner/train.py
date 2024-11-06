@@ -3,28 +3,69 @@ import sys
 import logging
 
 from code.common.algorithm import Algorithm
+from code.common.config import Config
 from code.learner.benchmark import Benchmark
-from code.learner.datasets import NetworkDatasetRandom
+from code.learner.config_control import ConfigControl
+from code.learner.datasets import NetworkDatasetRandom, NetworkDatasetZMQ
+from code.learner.model_manager import ModelManager
+from code.learner.node_info_ddp import NodeInfo
+from code.learner.offline_rlinfo_adapter import OfflineRlInfoAdapter
 
+config_path = os.path.join(os.path.dirname(__file__), "config", "common.conf")
 
 def _run(model_config, framework_config, single_test):
-    config_manager = framework_config
+    """
+        model_config: 模型配置
+        framework_config: 框架配置, 为框架的ConfigControl
+        single_test: 单独测试learner
+        """
+
+    config_manager = framework_config  # alias
     os.makedirs(config_manager.save_model_dir, exist_ok=True)
     os.makedirs(config_manager.train_dir, exist_ok=True)
     os.makedirs(config_manager.send_model_dir, exist_ok=True)
 
     if single_test:
+        config_manager.push_to_modelpool = False
+        config_manager.distributed_backend = "none"
+
+    if model_config.test_config:
+        config_manager.distributed_backend = "none"
+        config_manager.batch_size = 2
+        config_manager.display_every = 1
+        config_manager.max_sample = 10
+        config_manager.max_steps = 5
+
+    code_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    model_manager = ModelManager(
+        code_dir,
+        os.path.join("code", "actor", "model", "init"),
+        config_manager.push_to_modelpool,
+        save_checkpoint_dir=config_manager.save_model_dir,
+        backup_checkpoint_dir=config_manager.send_model_dir,
+        load_optimizer_state=config_manager.load_optimizer_state,
+    )
+
+    adapter = OfflineRlInfoAdapter(Config.data_shapes)
+    node_info = NodeInfo()
+
+    if single_test:
         dataset = NetworkDatasetRandom(config_manager, adapter)
     else:
-        dataset = None
+        dataset = NetworkDatasetZMQ(
+            config_manager, adapter, port=config_manager.ports[node_info.local_rank]
+        )
+
     benchmark = Benchmark(
         Algorithm(),
         dataset,
         model_manager,
         config_manager,
-
+        node_info,
+        slow_time=model_config.slow_time,
     )
-    pass
+    benchmark.run()
 
 def run(config):
     config_manager = ConfigControl(config_path)
