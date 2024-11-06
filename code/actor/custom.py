@@ -1,6 +1,7 @@
 from agent import Agent as AgentBase
 class Agent(AgentBase):
     def state_process(self, state_dict):
+        # TODO:
         return state_dict
 
     def reward_process(self, state_dict):
@@ -9,6 +10,8 @@ class Agent(AgentBase):
             return reward
 
         reward_sum = reward[-1]
+        # TODO:
+
         reward[-1] = reward_sum
         return tuple(reward)
 

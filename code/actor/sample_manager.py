@@ -62,7 +62,25 @@ class SampleManager:
         self._send_game_data()
 
     def _calc_reward(self):
-        pass
+        """
+        Calculate cumulated reward and advantage with GAE.
+        reward_sum: used for value loss
+        advantage: used for policy loss
+        V(s) here is a approximation of target network
+        """
+        for i in range(self.num_agents):
+            reversed_keys = list(self.rl_data_map[i].keys())
+            reversed_keys.reverse()
+            gae, last_gae = 0.0, 0.0
+            for j in reversed_keys:
+                rl_info = self.rl_data_map[i][j]
+                # TD error
+                delta = (
+                    -rl_info.value + rl_info.reward + self.gamma * rl_info.next_value
+                )
+                gae = gae * self.gamma * self.lamda + delta
+                rl_info.advantage = gae
+                rl_info.reward_sum = gae + rl_info.value
 
     def _format_data(self):
         pass
@@ -74,5 +92,13 @@ class SampleManager:
             reward = min
         return reward
 
+    def _add_extra_info(self, frame_no, sample):
+        return sample.astype(np.float32).tobytes()
+
     def _send_game_data(self):
-        pass
+        for i in range(self.num_agents):
+            samples = []
+            for sample in self.m_replay_buffer[i]:
+                samples.append(self._add_extra_info(*sample))
+            if (not self.single_test) and len(samples) > 0:
+                self._mem_pool_api.push_samples(samples)

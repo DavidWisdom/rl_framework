@@ -1,7 +1,4 @@
 from env.env import Env
-class Deck:
-    pass
-
 class Card(Env):
     PLAYER_NUM = 2
     LABEL_SIZE_LIST = [
@@ -34,13 +31,15 @@ class Card(Env):
     # 下家信息 下家初始手牌数 dim: 1 下家剩余手牌数 dim: 1 下家阵营 dim: 3 下家已出手牌 dim: 15 下方上一帧动作手牌 dim: 15
     # 上家信息 上家初始手牌数 dim: 1 上家剩余手牌数 dim: 1 上家阵营 dim: 3 上家已出手牌 dim: 15 上方上一帧动作手牌 dim: 15
 
-    def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1, player_num=2, player_card_num=17):
+    def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1, player_mode=None, player_card_num=17):
         super().__init__()
+        if player_mode is None:
+            player_mode = [1, 0, 0]
         self.is_turn = True
         self.eval_mode = eval_mode
         assert predict_frequency == 1
         self.predict_frequency = 1
-        self._init_game(player_num, player_card_num)
+        self._init_game(player_mode, player_card_num)
 
     def get_random_action(self, info):
         raise NotImplementedError("build model: not implemented")
@@ -49,20 +48,37 @@ class Card(Env):
 
         raise NotImplementedError("build model: not implemented")
 
-    def reset(self, eval_mode=False, player_num=2, player_card_num=17):
-        self._init_game(player_num, player_card_num)
+    def reset(self, eval_mode=False, player_mode=None, player_card_num=17):
+        if player_mode is None:
+            player_mode = [1, 0, 0]
+        self._init_game(player_mode, player_card_num)
 
     def close_game(self):
         raise NotImplementedError("build model: not implemented")
 
-    def _init_game(self, player_num=2, player_card_num=17):
+    def _init_game(self, player_mode=None, player_card_num=17):
         self.turn_no = 0
-        self.PLAYER_NUM = player_num
+        self.player_mode = player_mode
         self.player_card_num = player_card_num
-        self.player_init_cards = [0, 0, 0]
-        self.player_curr_cards = [0, 0, 0]
-        self.player_obs = [[0] * 16, [0] * 16, [0] * 16]
-        self.last_action = [[0] * 16, [0] * 16, [0] * 16]
+        if self.player_mode[0] == 1:
+            self.player_camp = [[0, 0, 1], [0, 0, 1], [0, 0, 1]]
+        else:
+            self.player_camp = []
+        if self.player_mode[0] == 1:
+            self.player_init_cards = [player_card_num, player_card_num, 0]
+        else:
+            self.player_init_cards = [player_card_num, player_card_num, player_card_num]
+        self.player_curr_cards = self.player_init_cards
+        self.cards = [4] * 15
+        self.cards[14] = 1
+        self.cards[15] = 1
+        self.player_cards = [[0] * 15, [0] * 15, [0] * 15]
+        self.player_used_cards = [[0] * 15, [0] * 15, [0] * 15]
+        self.last_action = [[0] * 15, [0] * 15, [0] * 15]
+        self._init_player_cards()
+
+    def _init_player_cards(self):
+        pass
 
     def _render(self):
         pass
