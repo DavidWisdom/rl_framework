@@ -48,6 +48,39 @@ class Agent:
 
         self.agent_type = "network"
 
+    def reset(self, agent_type=None, model_path=None):
+        # reset lstm input
+        self.lstm_hidden = np.zeros([self.lstm_unit_size])
+        self.lstm_cell = np.zeros([self.lstm_unit_size])
+
+        if agent_type is not None:
+            if self.keep_latest:
+                self.agent_type = "network"
+            else:
+                self.agent_type = agent_type
+
+        # for test without model pool
+        if self.single_test:
+            self.is_latest_model = True
+        else:
+            if model_path is None:
+                while True:
+                    try:
+                        if self.keep_latest:
+                            self._get_latest_model()
+                        else:
+                            self._get_random_model()
+                        self.last_model_path = None
+                        return
+                    except Exception as e:  # pylint: disable=broad-except
+                        time.sleep(1)
+                        raise
+            else:
+                if model_path != self.last_model_path:
+                    self._predictor.load_model(model_path)
+                    self.last_model_path = model_path
+
+
     def _update_model_list(self):
         model_key_list = []
         while len(model_key_list) == 0:
