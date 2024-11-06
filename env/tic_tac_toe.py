@@ -1,8 +1,9 @@
 import random
+import time
+
 from env import Env
 
 
-# TODO
 class TicTacToe(Env):
     LABEL_SIZE_LIST = [10]
     # 0-9
@@ -23,7 +24,7 @@ class TicTacToe(Env):
             assert False
         return [random.choice(legal_positions)]
 
-    def step(self, actions, render=False):
+    def step(self, actions, render=False, slow_time=0):
         reward = 0
         for i, act in enumerate(actions):
             if act:
@@ -46,7 +47,7 @@ class TicTacToe(Env):
                 self.state_dict[i]["observation"] = self.player_obs[1] + self.player_obs[0]
         obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
         if render:
-            self._render()
+            self._render(slow_time)
         return obs, reward, self.done, self.state_dict
 
     def reset(self, eval_mode=False):
@@ -62,7 +63,7 @@ class TicTacToe(Env):
         for j in range(1, 10):
             self.legal_action[1 + j] = 0
 
-    def _render(self):
+    def _render(self, slow_time):
         # 打印分隔线
         print("-----------------")
 
@@ -95,6 +96,7 @@ class TicTacToe(Env):
         # 打印棋盘底部
         print("    0   1   2")
         print("-----------------")
+        time.sleep(slow_time)
 
     def _init_game(self):
         self.turn_no = 0
@@ -129,7 +131,7 @@ class TicTacToe(Env):
                 all(self.player_obs[1][j * 3 + (2 - j)] == 1 for j in range(3)):
             return True
         # 检查是否平局：棋盘已满且没有连线
-        if all(self.legal_action[j + 2] != 0 for j in range(9)):
+        if all(self.legal_action[j + 2] == 0 for j in range(9)):
             return True
         # 如果没有结束，返回 False
         return False
@@ -139,10 +141,11 @@ if __name__ == "__main__":
     done = False
     _, r, d, state_dict = env.reset(eval_mode=True)
     step = 0
-    PLAY_NUM = 2
+    PLAYER_NUM = 2
     while not done:
-        actions = [[] for _ in range(PLAY_NUM)]
-        for i in range(PLAY_NUM):
+        actions = [[] for _ in range(PLAYER_NUM)]
+        for i in range(PLAYER_NUM):
+            print(state_dict[i]["legal_action"])
             action = env.get_random_action(state_dict)
             actions[i] = action
             _, r, d, state_dict = env.step(actions, render=True)
