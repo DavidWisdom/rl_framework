@@ -2,8 +2,7 @@ import collections
 
 import numpy as np
 
-from code.actor import rl_data_info
-from code.actor.mem_pool_api import MemPoolAPIs
+from code.common.mem_pool_api import MemPoolAPIs
 from code.actor.rl_data_info import RLDataInfo
 
 

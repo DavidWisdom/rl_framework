@@ -3,7 +3,7 @@ import io
 import time
 from numpy import random
 
-from code.actor.model_pool_client import ModelPoolClient
+from code.common.model_pool_client import ModelPoolClient
 
 
 

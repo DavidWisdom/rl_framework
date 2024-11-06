@@ -1,6 +1,6 @@
 import torch
 
-from code.actor.singleton import Singleton
+from code.common.singleton import Singleton
 from code.common.algorithm import Algorithm
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)

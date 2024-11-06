@@ -1,7 +1,13 @@
+import multiprocessing
+
+import lz4.block
+
 import torch
 import numpy as np
 
-from code.learner.membuffer import MemBuffer
+from code.common.zmq_mem_pool import ZMQMEMPOOL
+from code.learner.batch_process import BatchProcess
+from code.common.membuffer import MemBuffer
 
 
 class Datasets(object):
@@ -97,11 +103,6 @@ class NetworkDatasetZMQ(object):
         return sample_buf
 
     def enqueue_data(self, process_index):
-        LOG.info(
-            "sample process port:{} process_index:{} pid:{}".format(
-                self.port, process_index, os.getpid()
-            )
-        )
         while True:
             for sample in self.zmq_mem_pool.pull_samples():
                 decompress_data = lz4.block.decompress(

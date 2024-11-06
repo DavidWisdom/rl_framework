@@ -1,7 +1,7 @@
 import numpy as np
 import time
 import random
-from code.actor.model_pool_apis import ModelPoolAPIs
+from code.common.model_pool_apis import ModelPoolAPIs
 from predictor import TorchPredictor as LocalPredictor
 
 
