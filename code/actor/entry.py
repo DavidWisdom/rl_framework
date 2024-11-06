@@ -9,6 +9,7 @@ from code.actor import sample_manager
 from code.actor.actor import Actor
 from code.actor.custom import Agent
 from code.actor.model import Model
+from code.actor.sample_manager import SampleManager
 from env.tic_tac_toe import TicTacToe
 
 AGENT_NUM = 2

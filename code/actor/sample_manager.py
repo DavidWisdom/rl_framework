@@ -3,14 +3,45 @@ import collections
 import numpy as np
 
 from code.actor import rl_data_info
+from code.actor.mem_pool_api import MemPoolAPIs
 from code.actor.rl_data_info import RLDataInfo
 
 
 class SampleManager:
-    def __init__(self, num_agents, game_id=None, single_test=False, gamma=0.995, lamda=0.95):
+    def __init__(
+        self,
+        mem_pool_addr,
+        mem_pool_type,
+        num_agents,
+        game_id=None,
+        single_test=False,
+        data_shapes=None,
+        lstm_time_steps=16,
+        gamma=0.995,
+        lamda=0.95,
+    ):
+        self.single_test = single_test
+        # connect to mem pool
+        mem_pool_addr = mem_pool_addr
+        ip, port = mem_pool_addr.split(":")
+        self.m_mem_pool_ip = ip
+        self.m_mem_pool_port = port
+        self._data_shapes = data_shapes
+        self._LSTM_FRAME = lstm_time_steps
+
+        if not self.single_test:
+            self._mem_pool_api = MemPoolAPIs(
+                self.m_mem_pool_ip, self.m_mem_pool_port, socket_type=mem_pool_type
+            )
+
+        self.m_game_id = game_id
+        self.m_task_id, self.m_task_uuid = 0, "default_task_uuid"
+        self.num_agents = num_agents
         self.agents = None
         self.rl_data_map = [collections.OrderedDict() for _ in range(num_agents)]
-        self._replay_buffer = [[] for _ in range(num_agents)]
+        self.m_replay_buffer = [[] for _ in range(num_agents)]
+
+        # load config from config file
         self.gamma = gamma
         self.lamda = lamda
 
