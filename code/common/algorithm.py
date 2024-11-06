@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,8 +15,22 @@ class Algorithm(nn.Module):
         super(Algorithm, self).__init__()
         self.var_beta = Config.BETA_START
         self.learning_rate = Config.INIT_LEARNING_RATE_START
+        self.lstm = torch.nn.LSTM(
+            input_size=self.lstm_unit_size,
+            hidden_size=self.lstm_unit_size,
+            num_layers=1,
+            bias=True,
+            batch_first=True,
+            dropout=0,
+            bidirectional=False,
+        )
 
         pass
+
+    def forward(self, data_list):
+        _, data_list = data_list
+        feature_vec, legal_action, lstm_initial_state = data_list
+        result_list = []
 
     def compute_loss(self, data_list, rst_list):
         self.value_cost = 0
@@ -103,4 +119,6 @@ def make_conv_layer(kernel_size: Tuple[int, int], in_channels: int, out_channels
     return conv_layer, output_shape
 
 if __name__ == '__main__':
+    model = Algorithm()
+
     pass

@@ -6,7 +6,10 @@ class DimConfig:
 
 class Config:
     NETWORK_NAME = "network"
-
+    LABEL_SIZE_LIST = [10]
+    IS_REINFORCE_TASK_LIST = [
+        True
+    ]
     INIT_LEARNING_RATE_START = 0.0001
     BETA_START = 0.025
 

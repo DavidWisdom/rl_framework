@@ -1,14 +1,16 @@
 import random
 from env import Env
-import numpy as np
 
+
+# TODO
 class TicTacToe(Env):
-    LABEL_SIZE_LIST = [11] # 0-10 0: no action
+    LABEL_SIZE_LIST = [10]
+    # 0-9
+    # 0: no action
     PLAYER_NUM = 2
     def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1):
         self.is_turn = True
         self.eval_mode = eval_mode
-        assert predict_frequency == 1
         self.predict_frequency = 1
         self._init_game()
 
@@ -22,30 +24,29 @@ class TicTacToe(Env):
         return [random.choice(legal_positions)]
 
     def step(self, actions, render=False):
-        # action = [pos]
-        obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
         reward = 0
         for i, act in enumerate(actions):
             if act:
                 assert self.turn_no == i
                 a = act[0]
                 assert len(act) == 1 and 0 <= a <= 9
-                self.turn_no = (self.turn_no + 1) % self.PLAYER_NUM
                 if 1 <= a <= 9:
-                    assert self.legal_action[a + 1] == 1
-                    self.state_dict[i]["observation"][(a - 1)] = 1
-                    self.state_dict[self.turn_no]["observation"][(a - 1) + 9] = 1
-                    self.legal_action[a + 1] = 0
+                    assert self.legal_action[1 + a] == 1
+                    self.player_obs[i][(-1) + a] = 1
+                    self.legal_action[1 + a] = 0
                 self.done[i] = self._is_over()
                 if self.done[i]:
-                    self.legal_action[1] = 1
-                    for j in range(1, 10):
-                        self.legal_action[j + 1] = 0
-                self.state_dict[i]["legal_action"] = self.legal_action
-                self.state_dict[self.turn_no]["legal_action"] = self.legal_action
+                    self._limit_action()
+                self._next_turn()
+        for i in range(self.PLAYER_NUM):
+            self.state_dict[i]["legal_action"] = self.legal_action
+            if i == 0:
+                self.state_dict[i]["observation"] = self.player_obs[0] + self.player_obs[1]
+            else:
+                self.state_dict[i]["observation"] = self.player_obs[1] + self.player_obs[0]
+        obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
         if render:
             self._render()
-
         return obs, reward, self.done, self.state_dict
 
     def reset(self, eval_mode=False):
@@ -55,6 +56,11 @@ class TicTacToe(Env):
 
     def close_game(self):
         pass
+
+    def _limit_action(self):
+        self.legal_action[1] = 1
+        for j in range(1, 10):
+            self.legal_action[1 + j] = 0
 
     def _render(self):
         # 打印分隔线
@@ -91,40 +97,41 @@ class TicTacToe(Env):
         print("-----------------")
 
     def _init_game(self):
-        self.state_dict = [{} for _ in range(self.PLAYER_NUM)]
         self.turn_no = 0
-        self.done = [False for _ in range(self.PLAYER_NUM)]
         self.legal_action = [1] * 11
         self.legal_action[1] = 0
+        self.done = [False for _ in range(self.PLAYER_NUM)]
+        self.player_obs = [[0] * 9 for _ in range(self.PLAYER_NUM)]
+        self.state_dict = [{} for _ in range(self.PLAYER_NUM)]
         for i in range(self.PLAYER_NUM):
-            self.state_dict[i]["observation"] = [0] * 18
+            self.state_dict[i]["observation"] = (self.player_obs[0] + self.player_obs[1]) if self.turn_no == 0 else (self.player_obs[1] + self.player_obs[0])
             self.state_dict[i]["legal_action"] = self.legal_action
             self.state_dict[i]["reward"] = 0
+
+    def _next_turn(self):
+        self.turn_no = (self.turn_no + 1) % self.PLAYER_NUM
 
     def _is_over(self):
         for i in range(3):
             # 水平连线
-            if all(self.state_dict[0]["observation"][i * 3 + j] == 1 for j in range(3)) or \
-                    all(self.state_dict[0]["observation"][i * 3 + j + 9] == 1 for j in range(3)):
+            if all(self.player_obs[0][i * 3 + j] == 1 for j in range(3)) or \
+                    all(self.player_obs[1][i * 3 + j] == 1 for j in range(3)):
                 return True
             # 垂直连线
-            if all(self.state_dict[0]["observation"][j * 3 + i] == 1 for j in range(3)) or \
-                    all(self.state_dict[0]["observation"][j * 3 + i + 9] == 1 for j in range(3)):
+            if all(self.player_obs[0][j * 3 + i] == 1 for j in range(3)) or \
+                    all(self.player_obs[1][j * 3 + i] == 1 for j in range(3)):
                 return True
-
-            # 检查对角线连线
-        if all(self.state_dict[0]["observation"][i * 3 + i] == 1 for i in range(3)) or \
-                all(self.state_dict[0]["observation"][i * 3 + i + 9] == 1 for i in range(3)):
+        # 检查对角线连线
+        if all(self.player_obs[0][j * 3 + j] == 1 for j in range(3)) or \
+                all(self.player_obs[1][j * 3 + j] == 1 for j in range(3)):
             return True
-        if all(self.state_dict[0]["observation"][i * 3 + (2 - i)] == 1 for i in range(3)) or \
-                all(self.state_dict[0]["observation"][i * 3 + (2 - i) + 9] == 1 for i in range(3)):
+        if all(self.player_obs[0][j * 3 + (2 - j)] == 1 for j in range(3)) or \
+                all(self.player_obs[1][j * 3 + (2 - j)] == 1 for j in range(3)):
             return True
-
-            # 检查是否平局：棋盘已满且没有连线
-        if all(self.legal_action[i + 2] != 0 for i in range(9)):
+        # 检查是否平局：棋盘已满且没有连线
+        if all(self.legal_action[j + 2] != 0 for j in range(9)):
             return True
-
-            # 如果没有结束，返回 False
+        # 如果没有结束，返回 False
         return False
 
 if __name__ == "__main__":
@@ -138,7 +145,7 @@ if __name__ == "__main__":
         for i in range(PLAY_NUM):
             action = env.get_random_action(state_dict)
             actions[i] = action
-            _, r, d, state_dict = env.step(actions, render=(i == 0))
+            _, r, d, state_dict = env.step(actions, render=True)
             done = all(d)
             actions[i] = []
         step += 1
