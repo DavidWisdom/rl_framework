@@ -23,14 +23,14 @@ class TicTacToe(Env):
 
     def step(self, actions, render=False):
         # action = [pos]
-        obs = [self.state_dict[i]["observation"] for i in range(2)]
+        obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
         reward = 0
         for i, act in enumerate(actions):
             if act:
                 assert self.turn_no == i
                 a = act[0]
                 assert len(act) == 1 and 0 <= a <= 9
-                self.turn_no = (self.turn_no + 1) % 2
+                self.turn_no = (self.turn_no + 1) % self.PLAYER_NUM
                 if 1 <= a <= 9:
                     assert self.legal_action[a + 1] == 1
                     self.state_dict[i]["observation"][(a - 1)] = 1
@@ -91,12 +91,12 @@ class TicTacToe(Env):
         print("-----------------")
 
     def _init_game(self):
-        self.state_dict = [{} for _ in range(2)]
+        self.state_dict = [{} for _ in range(self.PLAYER_NUM)]
         self.turn_no = 0
-        self.done = [False for _ in range(2)]
+        self.done = [False for _ in range(self.PLAYER_NUM)]
         self.legal_action = [1] * 11
         self.legal_action[1] = 0
-        for i in range(2):
+        for i in range(self.PLAYER_NUM):
             self.state_dict[i]["observation"] = [0] * 18
             self.state_dict[i]["legal_action"] = self.legal_action
             self.state_dict[i]["reward"] = 0
@@ -132,9 +132,10 @@ if __name__ == "__main__":
     done = False
     _, r, d, state_dict = env.reset(eval_mode=True)
     step = 0
+    PLAY_NUM = 2
     while not done:
-        actions = [[] for _ in range(2)]
-        for i in range(2):
+        actions = [[] for _ in range(PLAY_NUM)]
+        for i in range(PLAY_NUM):
             action = env.get_random_action(state_dict)
             actions[i] = action
             _, r, d, state_dict = env.step(actions, render=(i == 0))
