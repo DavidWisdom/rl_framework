@@ -1,6 +1,10 @@
+import random
+
 from env.env import Env
+
+
 class Card(Env):
-    PLAYER_NUM = 2
+    PLAYER_NUM = 3
     LABEL_SIZE_LIST = [
         15,
         # 0: no action
@@ -59,11 +63,10 @@ class Card(Env):
     def _init_game(self, player_mode=None, player_card_num=17):
         self.turn_no = 0
         self.player_mode = player_mode
-        self.player_card_num = player_card_num
         if self.player_mode[0] == 1:
             self.player_camp = [[0, 0, 1], [0, 0, 1], [0, 0, 1]]
         else:
-            self.player_camp = []
+            self.player_camp = [[0, 0, 1], [0, 0, 1], [0, 0, 1]]
         if self.player_mode[0] == 1:
             self.player_init_cards = [player_card_num, player_card_num, 0]
         else:
@@ -78,7 +81,17 @@ class Card(Env):
         self._init_player_cards()
 
     def _init_player_cards(self):
-        pass
+        for i in range(self.PLAYER_NUM):  # 假设 PLAYER_NUM 是玩家的数量
+            cards_num = self.player_init_cards[i]  # 每个玩家初始的牌数
+            for j in range(cards_num):
+                available_cards = [index for index, value in enumerate(self.cards) if value > 0]  # 非0数值的索引列表
+                if available_cards:  # 检查是否有可用的牌
+                    index = random.choice(available_cards)  # 随机选择一个非0数值的索引
+                    self.player_cards[i][j] = index  # 将牌的索引分配给玩家
+                    self.cards[index] = self.cards[index] - 1  # 将已分配的牌标记为0，表示已被拿走
+                else:
+                    break
 
     def _render(self):
         pass
+

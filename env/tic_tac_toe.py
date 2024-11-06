@@ -34,17 +34,14 @@ class TicTacToe(Env):
             assert self.legal_action[1 + a] == 1
             self.player_obs[self.turn_no][(-1) + a] = 1
             self.legal_action[1 + a] = 0
-        if self.winner != -1:
-            self.done[self.turn_no] = True
-        else:
-            self.done[self.turn_no] = self._is_over()
-            if self.done[self.turn_no]:
-                self.winner = self.turn_no
-                self._limit_action()
-        if self.winner != self.turn_no:
-            reward = -0.1
-        else:
+        self.done[self.turn_no] = self._is_over(self.turn_no)
+        if self.winner == -1 and self.done[self.turn_no]:
+            self.winner = self.turn_no
+            self._limit_action()
+        if self.winner == self.turn_no:
             reward = +1
+        else:
+            reward = 0
         self.state_dict[self.turn_no]["reward"] = reward
         self._next_turn()
         self.state_dict[self.turn_no]["legal_action"] = self.legal_action
@@ -119,7 +116,9 @@ class TicTacToe(Env):
     def _next_turn(self):
         self.turn_no = (self.turn_no + 1) % self.PLAYER_NUM
 
-    def _is_over(self):
+    def _is_over(self, player_id):
+        if self.done[player_id]:
+            return True
         for i in range(3):
             # 水平连线
             if all(self.player_obs[0][i * 3 + j] == 1 for j in range(3)) or \

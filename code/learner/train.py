@@ -66,8 +66,3 @@ def get_config_definition():
         "influxdb_port": {"value": 8086},
         "backup_model_dir": {"value": "/aiarena/backup/"},
     }
-
-if __name__ == '__main__':
-    def main(_):
-        pass
-    pass

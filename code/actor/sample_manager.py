@@ -52,6 +52,7 @@ class SampleManager:
         return sample.astype(np.float32).tobytes()
 
     def _send_game_data(self):
+        pass
 
     def save_last_sample(self):
         pass

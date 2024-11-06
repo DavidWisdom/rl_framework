@@ -138,6 +138,9 @@ class Agent:
             return d_action
         return action, d_action
 
+    def _sample_process(self, state_dict, pred_ret):
+        pass
+
     def _predict_process(self, feature, legal_action):
         input_list = []
         input_list.append(np.array(feature))
@@ -153,12 +156,31 @@ class Agent:
 
         return prob, value, action, d_action
 
-    def _legal_soft_max(self):
-        pass
+    def _sample_masked_action(self, logits, legal_action):
+        prob_list = []
+        action_list = []
+        d_action_list = []
+        return [prob_list], action_list, d_action_list
+
+    def _legal_soft_max(self, input_hidden, legal_action):
+        _lsm_const_w, _lsm_const_e = 1e20, 1e-5
+        _lsm_const_e = 0.00001
+
+        tmp = input_hidden - _lsm_const_w * (1.0 - legal_action)
+        tmp_max = np.max(tmp, keepdims=True)
+        # Not necessary max clip 1
+        tmp = np.clip(tmp - tmp_max, -_lsm_const_w, 1)
+        # tmp = tf.exp(tmp - tmp_max)* legal_action + _lsm_const_e
+        tmp = (np.exp(tmp) + _lsm_const_e) * legal_action
+        # tmp_sum = tf.reduce_sum(tmp, axis=1, keepdims=True)
+        probs = tmp / np.sum(tmp, keepdims=True)
+        return probs
 
     def _legal_sample(self, probs, legal_action=None, use_max=False):
+        if use_max:
+            return np.argmax(probs)
 
-        pass
+        return np.argmax(np.random.multinomial(1, probs, size=1))
 
     def set_lstm_info(self, lstm_info):
         self.lstm_hidden, self.lstm_cell = lstm_info

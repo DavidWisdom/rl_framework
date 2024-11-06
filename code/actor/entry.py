@@ -7,8 +7,15 @@ import psutil
 
 from code.actor import sample_manager
 from code.actor.actor import Actor
+from code.actor.custom import Agent
+from code.actor.model import Model
+from env.tic_tac_toe import TicTacToe
 
 AGENT_NUM = 2
+work_dir = os.path.dirname(os.path.abspath(__file__))
+
+# sys.path.append("/aiarena/code/") add common to path
+sys.path.append(os.path.dirname(work_dir))
 
 def select_mempool(actor_id, actor_num, mempool_list):
     mempool_num = len(mempool_list)
@@ -27,28 +34,110 @@ def auto_bind_cpu(actor_id, actor_num):
 
 def _run(
     actor_id,
+    config_path,
+    model_pool_addr,
+    single_test,
+    port_begin,
+    gc_server_addr,
+    gamecore_req_timeout,
     max_frame_num,
-
+    runtime_id_prefix,
+    aiserver_ip,
+    mem_pool_addr_list,
     max_episode,
+    monitor_server_addr,
+    config,
 ):
+    if config.auto_bind_cpu:
+        auto_bind_cpu(actor_id, config.actor_num)
+
+    # chdir to work_dir to access the config.json with relative path
+    os.chdir(work_dir)
+
+    agents = []
+    game_id_init = "None"
+    main_agent = random.randint(0, AGENT_NUM - 1)
+
+    for i in range(AGENT_NUM):
+        agents.append(
+            Agent(
+                Model(),
+                model_pool_addr.split(";"),
+                config=config,
+                keep_latest=(i == main_agent),
+                single_test=single_test,
+            )
+        )
+
+    addrs = []
+    for i in range(AGENT_NUM):
+        addrs.append(f"tcp://0.0.0.0:{port_begin + actor_id * AGENT_NUM + i}")
+
+    runtime_id = f"{runtime_id_prefix.replace('_', '-')}-{actor_id}"
+
+    env = TicTacToe()
+
+    mempool = select_mempool(actor_id, config.actor_num, mem_pool_addr_list)
+    sample_manager = SampleManager(
+        mem_pool_addr=mempool,
+        mem_pool_type="zmq",
+        num_agents=AGENT_NUM,
+        game_id=game_id_init,
+        single_test=single_test,
+        data_shapes=config.data_shapes,
+        lstm_time_steps=config.LSTM_TIME_STEPS,
+        gamma=config.GAMMA,
+        lamda=config.LAMDA,
+    )
+
     actor = Actor(
-        id=actor_id,
+        actor_id=actor_id,
         agents=agents,
         max_episode=max_episode,
-        is_train=config.IS_TRAIN
+        is_train=config.IS_TRAIN,
     )
     actor.set_sample_manager(sample_manager)
     actor.set_env(env)
+    actor.run(eval_freq=config.EVAL_FREQ)
+
+def run(config):
+    mem_pool_addr_list = config.mem_pool_addr.strip().split(";")
+    monitor_ip = mem_pool_addr_list[0].split(":")[0]
+    monitor_server_addr = f"{monitor_ip}:8086"
+    from code.common.config import Config
     try:
-        pass
+        log_file = config.log_file or "/aiarena/logs/actor/actor_{}.log".format(
+            config.id
+        )
+        log_level = None
+        if config.debug_log:
+            log_level = "DEBUG"
+        elif config.single_test:
+            log_level = "INFO"
+        elif config.test_config:
+            log_level = "INFO"
+            config.max_frame_num = 1000
+
+        _run(
+            config.id,
+            config.config_path,
+            config.model_pool_addr,
+            config.single_test,
+            config.port_begin,
+            config.gc_server_addr,
+            config.gamecore_req_timeout,
+            config.max_frame_num,
+            config.runtime_id_prefix,
+            config.aiserver_ip,
+            mem_pool_addr_list,
+            config.max_episode,
+            monitor_server_addr,
+            Config,
+        )
     except SystemExit:
         raise
     except Exception:
         raise
-
-def run(config):
-
-    pass
 
 def get_config_definition():
     return {
@@ -73,24 +162,8 @@ def get_config_definition():
             "help": "single test without model pool/mem pool",
         },
         "print_yaml": {"value": False, "help": "print yaml config"},
-        "config_path": {
-            "value": interface_default_config,
-            "help": "config file for interface",
-        },
-        "gamecore_req_timeout": {
-            "value": 30000,
-            "help": "millisecond timeout for gamecore to wait reply from server",
-        },
-        "gc_server_addr": {
-            "value": "127.0.0.1:23432",
-            "help": "address of gamecore server",
-        },
         "aiserver_ip": {"value": "127.0.0.1", "help": "the actor ip"},
         "max_episode": {"value": -1, "help": "max number for run episode"},
-        "monitor_server_addr": {
-            "value": "127.0.0.1:8086",
-            "help": "monitor server addr",
-        },
         "runtime_id_prefix": {"value": "actor-1v1", "help": "must not contain '_'"},
         "log_file": {
             "value": "",
@@ -100,8 +173,3 @@ def get_config_definition():
         "max_frame_num": {"value": 20000},
         "debug_log": {"value": False, "help": "use debug log level"},
     }
-
-if __name__ == '__main__':
-    def main(_):
-        pass
-    pass
