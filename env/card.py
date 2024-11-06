@@ -33,8 +33,9 @@ class Card(Env):
     # 我方信息 我方初始手牌数 dim: 1 我方剩余手牌数 dim: 1 我方阵营 dim: 3 我方已出手牌 dim: 15 我方剩余手牌 dim: 15 我方上一帧动作手牌 dim: 15
     # 下家信息 下家初始手牌数 dim: 1 下家剩余手牌数 dim: 1 下家阵营 dim: 3 下家已出手牌 dim: 15 下方上一帧动作手牌 dim: 15
     # 上家信息 上家初始手牌数 dim: 1 上家剩余手牌数 dim: 1 上家阵营 dim: 3 上家已出手牌 dim: 15 上方上一帧动作手牌 dim: 15
-    
+
     def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1, player_num=2, player_card_num=17):
+        super().__init__()
         self.is_turn = True
         self.eval_mode = eval_mode
         assert predict_frequency == 1
@@ -58,7 +59,10 @@ class Card(Env):
         self.turn_no = 0
         self.PLAYER_NUM = player_num
         self.player_card_num = player_card_num
-        self.player_obs = [[], [], []]
+        self.player_init_cards = [0, 0, 0]
+        self.player_curr_cards = [0, 0, 0]
+        self.player_obs = [[0] * 16, [0] * 16, [0] * 16]
+        self.last_action = [[0] * 16, [0] * 16, [0] * 16]
 
     def _render(self):
         pass

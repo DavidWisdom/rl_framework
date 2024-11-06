@@ -29,9 +29,12 @@ class Actor:
             else:
                 agent.reset("network")
 
-    def _save_last_sample(self, done, eval_mode, sample_manager, state_dict):
+    def _save_last_sample(self, done, eval_mode, sample_manager, state_dict, turn_no=-1):
         if done:
             for i, agent in enumerate(self.agents):
+                if turn_no != -1:
+                    i = turn_no
+                    agent = self.agents[i]
                 if agent.is_latest_model and not eval_mode:
                     if state_dict[i]["reward"] is not None:
                         if type(state_dict[i]["reward"]) == tuple:
@@ -44,6 +47,8 @@ class Actor:
                             )
                     else:
                         sample_manager.save_last_sample(agent_id=i, reward=0)
+                if turn_no != -1:
+                    break
 
     def _run_episode(self, eval_mode=False):
         sample_manager = self._sample_manager
@@ -56,12 +61,30 @@ class Actor:
         else:
             game_id = state_dict[0]["game_id"]
         sample_manager.reset(agents=self.agents, game_id=game_id)
+        actions = [[] for _ in range(len(self.agents))]
         rewards = [[] for _ in range(len(self.agents))]
         step = 0
         game_info = {}
-        while not done:
-            actions = [[] for _ in range(len(self.agents))]
-            for i, agent in enumerate(self.agents):
+        if not self.env.is_turn:
+            while not done:
+                for i, agent in enumerate(self.agents):
+                    action, d_action, sample = agent.process(state_dict[i])
+                    if eval_mode:
+                        action = d_action
+                    actions[i] = action
+                    rewards[i].append(sample["reward"])
+                    if agent.is_latest_model and not eval_mode:
+                        sample_manager.save_sample(
+                            **sample, agent_id=i, game_id=game_id,
+                        )
+                _, r, d, state_dict = self.env.step(actions)
+                done = any(d)
+                step += 1
+                self._save_last_sample(done, eval_mode, sample_manager, state_dict)
+        else:
+            while not done:
+                i = self.env.get_turn_no()
+                agent = self.agents[i]
                 action, d_action, sample = agent.process(state_dict[i])
                 if eval_mode:
                     action = d_action
@@ -71,15 +94,10 @@ class Actor:
                     sample_manager.save_sample(
                         **sample, agent_id=i, game_id=game_id,
                     )
-                if self.env.is_turn:
-                    _, r, d, state_dict = self.env.step(actions)
-                    done = all(d)
-                    actions[i] = []
-            if not self.env.is_turn:
                 _, r, d, state_dict = self.env.step(actions)
-                done = any(d)
-            step += 1
-            self._save_last_sample(done, eval_mode, sample_manager, state_dict)
+                done = all(d)
+                step += 1
+                self._save_last_sample(d[i], eval_mode, sample_manager, state_dict, turn_no=i)
         self.env.close_game()
 
         if self.is_train and not eval_mode:

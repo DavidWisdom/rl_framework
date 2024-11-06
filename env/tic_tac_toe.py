@@ -10,6 +10,7 @@ class TicTacToe(Env):
     # 0: no action
     PLAYER_NUM = 2
     def __init__(self, is_turn=False, eval_mode=False, predict_frequency=1):
+        super().__init__()
         self.is_turn = True
         self.eval_mode = eval_mode
         self.predict_frequency = 1
@@ -25,26 +26,34 @@ class TicTacToe(Env):
         return [random.choice(legal_positions)]
 
     def step(self, actions, render=False, slow_time=0):
-        reward = 0
-        for i, act in enumerate(actions):
-            if act:
-                assert self.turn_no == i
-                a = act[0]
-                assert len(act) == 1 and 0 <= a <= 9
-                if 1 <= a <= 9:
-                    assert self.legal_action[1 + a] == 1
-                    self.player_obs[i][(-1) + a] = 1
-                    self.legal_action[1 + a] = 0
-                self.done[i] = self._is_over()
-                if self.done[i]:
-                    self._limit_action()
-                self._next_turn()
-        for i in range(self.PLAYER_NUM):
-            self.state_dict[i]["legal_action"] = self.legal_action
-            if i == 0:
-                self.state_dict[i]["observation"] = self.player_obs[0] + self.player_obs[1]
-            else:
-                self.state_dict[i]["observation"] = self.player_obs[1] + self.player_obs[0]
+        act = actions[self.turn_no]
+        assert len(act) == 1
+        a = act[0]
+        assert 0 <= a <= 9
+        if 1 <= a <= 9:
+            assert self.legal_action[1 + a] == 1
+            self.player_obs[self.turn_no][(-1) + a] = 1
+            self.legal_action[1 + a] = 0
+        if self.winner != -1:
+            self.done[self.turn_no] = True
+        else:
+            self.done[self.turn_no] = self._is_over()
+            if self.done[self.turn_no]:
+                self.winner = self.turn_no
+                self._limit_action()
+        if self.winner != self.turn_no:
+            reward = -0.1
+        else:
+            reward = +1
+        self.state_dict[self.turn_no]["reward"] = reward
+        self._next_turn()
+        self.state_dict[self.turn_no]["legal_action"] = self.legal_action
+        if self.turn_no == 0:
+            self.state_dict[self.turn_no]["observation"] = self.player_obs[0] + self.player_obs[1]
+        else:
+            self.state_dict[self.turn_no]["observation"] = self.player_obs[1] + self.player_obs[0]
+        self.state_dict[self.turn_no]["turn_no"] = self.turn_no
+        self.state_dict[self.turn_no]["winner"] = self.winner
         obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
         if render:
             self._render(slow_time)
@@ -101,6 +110,7 @@ class TicTacToe(Env):
         self.done = [False for _ in range(self.PLAYER_NUM)]
         self.player_obs = [[0] * 9 for _ in range(self.PLAYER_NUM)]
         self.state_dict = [{} for _ in range(self.PLAYER_NUM)]
+        self.winner = -1
         for i in range(self.PLAYER_NUM):
             self.state_dict[i]["observation"] = (self.player_obs[0] + self.player_obs[1]) if self.turn_no == 0 else (self.player_obs[1] + self.player_obs[0])
             self.state_dict[i]["legal_action"] = self.legal_action
@@ -138,14 +148,12 @@ if __name__ == "__main__":
     _, r, d, state_dict = env.reset(eval_mode=True)
     step = 0
     PLAYER_NUM = 2
+    actions = [[] for _ in range(PLAYER_NUM)]
     while not done:
-        actions = [[] for _ in range(PLAYER_NUM)]
-        for i in range(PLAYER_NUM):
-            print(state_dict[i]["legal_action"])
-            action = env.get_random_action(state_dict)
-            actions[i] = action
-            _, r, d, state_dict = env.step(actions, render=True)
-            done = all(d)
-            actions[i] = []
+        turn_no = env.turn_no
+        action = env.get_random_action(state_dict)
+        actions[turn_no] = action
+        _, r, d, state_dict = env.step(actions, render=True)
+        done = all(d)
         step += 1
     env.close_game()

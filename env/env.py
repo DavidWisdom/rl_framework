@@ -5,6 +5,10 @@ class Env(object):
         self.is_turn = is_turn
         self.eval_mode = eval_mode
         self.predict_frequency = predict_frequency
+        self.turn_no = -1
+
+    def get_turn_no(self):
+        return self.turn_no
 
     @abstractmethod
     def get_random_action(self, info):
