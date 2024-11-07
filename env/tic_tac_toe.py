@@ -1,5 +1,6 @@
 import random
 import time
+import numpy as np
 
 from env import Env
 
@@ -39,18 +40,19 @@ class TicTacToe(Env):
             self.winner = self.turn_no
             self._limit_action()
         if self.winner == self.turn_no:
-            reward = +1
+            reward = [+1]
         else:
-            reward = 0
+            reward = [0]
         self.state_dict[self.turn_no]["reward"] = reward
         self._next_turn()
-        self.state_dict[self.turn_no]["legal_action"] = self.legal_action
+        self.state_dict[self.turn_no]["legal_action"] = self.legal_action.copy()
         if self.turn_no == 0:
-            self.state_dict[self.turn_no]["observation"] = self.player_obs[0] + self.player_obs[1]
+            self.state_dict[self.turn_no]["observation"] = np.concatenate((self.player_obs[0], self.player_obs[1]))
         else:
-            self.state_dict[self.turn_no]["observation"] = self.player_obs[1] + self.player_obs[0]
-        self.state_dict[self.turn_no]["turn_no"] = self.turn_no
-        self.state_dict[self.turn_no]["winner"] = self.winner
+            self.state_dict[self.turn_no]["observation"] = np.concatenate((self.player_obs[1], self.player_obs[0]))
+        self.state_dict[self.turn_no]["req_pb"]["turn_no"] = self.turn_no
+        self.state_dict[self.turn_no]["req_pb"]["winner"] = self.winner
+        self.state_dict[self.turn_no]["req_pb"]["frame_no"] = self._step
         obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
         if render:
             self._render(slow_time)
@@ -59,7 +61,8 @@ class TicTacToe(Env):
     def reset(self, eval_mode=False):
         self.eval_mode = eval_mode
         self._init_game()
-        return None, 0, False, self.state_dict
+        obs = [self.state_dict[i]["observation"] for i in range(self.PLAYER_NUM)]
+        return obs, [0], False, self.state_dict
 
     def close_game(self):
         pass
@@ -104,17 +107,25 @@ class TicTacToe(Env):
         self.turn_no = 0
         self.legal_action = [1] * 11
         self.legal_action[1] = 0
-        self.done = [False for _ in range(self.PLAYER_NUM)]
-        self.player_obs = [[0] * 9 for _ in range(self.PLAYER_NUM)]
-        self.state_dict = [{} for _ in range(self.PLAYER_NUM)]
+        self.done = np.array([False for _ in range(self.PLAYER_NUM)])
+        self.player_obs = np.array([np.array([0] * 9) for _ in range(self.PLAYER_NUM)])
+        self.state_dict = np.array([{} for _ in range(self.PLAYER_NUM)])
         self.winner = -1
+        self._step = 0
         for i in range(self.PLAYER_NUM):
-            self.state_dict[i]["observation"] = (self.player_obs[0] + self.player_obs[1]) if self.turn_no == 0 else (self.player_obs[1] + self.player_obs[0])
-            self.state_dict[i]["legal_action"] = self.legal_action
-            self.state_dict[i]["reward"] = 0
+            self.state_dict[i]["observation"] = np.array([0] * 18)
+            self.state_dict[i]["legal_action"] = self.legal_action.copy()
+            self.state_dict[i]["reward"] = [0]
+            self.state_dict[i]["req_pb"] = {}
+            self.state_dict[i]["req_pb"]["turn_no"] = self.turn_no
+            self.state_dict[i]["req_pb"]["winner"] = self.winner
+            self.state_dict[i]["req_pb"]["frame_no"] = self.step
+            self.state_dict[i]["sub_action_mask"] = {}
+            self.state_dict[i]["sub_action_mask"][0] = np.array([1])
 
     def _next_turn(self):
         self.turn_no = (self.turn_no + 1) % self.PLAYER_NUM
+        self._step += 1
 
     def _is_over(self, player_id):
         if self.done[player_id]:

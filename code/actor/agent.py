@@ -102,7 +102,6 @@ class Agent:
     def _get_random_model(self):
         if self.agent_type in ["common_ai", "random"]:
             self.is_latest_model = False
-
             self.model_version = ""
             return True
 
@@ -138,8 +137,52 @@ class Agent:
             return d_action
         return action, d_action
 
+    def _update_legal_action(self, original_la, actions):
+        # TODO:
+        return original_la
+
     def _sample_process(self, state_dict, pred_ret):
-        pass
+        is_train = False
+        req_pb = state_dict["req_pb"]
+        frame_no = req_pb["frame_no"]
+        feature_vec, reward, sub_action_mask = (
+            state_dict["observation"],
+            state_dict["reward"],
+            state_dict["sub_action_mask"],
+        )
+        done = False
+        prob, value, action, _ = pred_ret
+        legal_action = self._update_legal_action(state_dict["legal_action"], action)
+        keys = (
+            "frame_no",
+            "vec_feature",
+            "legal_action",
+            "action",
+            "reward",
+            "value",
+            "prob",
+            "sub_action",
+            "lstm_cell",
+            "lstm_hidden",
+            "done",
+            "is_train",
+        )
+        values = (
+            frame_no,
+            feature_vec,
+            legal_action,
+            action,
+            reward[-1],
+            value,
+            prob,
+            sub_action_mask,
+            self.lstm_cell,
+            self.lstm_hidden,
+            done,
+            is_train,
+        )
+        sample = dict(zip(keys, values))
+        self.last_sample = sample
 
     def _predict_process(self, feature, legal_action):
         input_list = []
@@ -160,6 +203,21 @@ class Agent:
         prob_list = []
         action_list = []
         d_action_list = []
+
+        label_split_size = [
+            sum(self.label_size_list[: index + 1])
+            for index in range(len(self.label_size_list))
+        ]
+        legal_actions = np.split(legal_action, label_split_size)
+        logits_split = np.split(logits[0], label_split_size)
+        for index in range(0, len(self.label_size_list)):
+            probs = self._legal_soft_max(logits_split[index], legal_actions[index])
+            prob_list += list(probs)
+            sample_action = self._legal_sample(probs, use_max=False)
+            action_list.append(sample_action)
+            d_action = self._legal_sample(probs, use_max=True)
+            d_action_list.append(d_action)
+
         return [prob_list], action_list, d_action_list
 
     def _legal_soft_max(self, input_hidden, legal_action):
